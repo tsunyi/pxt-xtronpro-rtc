@@ -17,23 +17,9 @@ enum TimeItem {
     YEAR
 }
 
-enum TimeFormat {
-    //% block="yyyy-MM-dd hh:mm:ss"
-    BASIC,
-    //% block="yyyy/MM/dd hh:mm:ss"
-    BASIC2,
-    //% block="yyyy-MM-dd"
-    YMD,
-    //% block="hh:mm:ss"
-    HMS,
-    //% block="yyyy-MM-dd ww hh:mm:ss"
-    FULL
-}
-
-
 //% color="#20b2aa" weight=75 icon="\uf133" block="RTC"
 //% groups='["Time","Create", "Basic","Separator", "Theme", "Digits" ]'
-namespace rtcModules {
+namespace rtc {
 
     const DS1339_I2C_ADDRESS = 0x68  //I2C address of the DS1339
 
@@ -158,7 +144,7 @@ namespace rtcModules {
             this.connect();
 
             if (!this.isConnected)
-                return 0;
+                return 1;
 
             const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_DAY);
 
@@ -180,7 +166,7 @@ namespace rtcModules {
             this.connect();
 
             if (!this.isConnected)
-                return 0;
+                return 1;
 
             const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_MONTH);
 
@@ -202,76 +188,112 @@ namespace rtcModules {
     export const ds1339 = new DS1339();
 
     /**
-     * TODO: read format time string.
+     * Read string format time.
      */
     //% group="Time"
     //% block weight=50
-    //% blockId=rtc_read_format_time block="time in %fmt format"
+    //% blockId=rtc_read_format_time block="string format time %format "
     //% help=rtc/read-format-time
-    export function readTimeInFormat(fmt: TimeFormat = TimeFormat.BASIC): string {
-        const weekCN = '一二三四五六日';
-        const weekEN = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        let format: string;
+    export function stringFormatTime(format: string = "hh:mm"): string {
+        const weekList = [
+            'Monday', 
+            'Tuesday', 
+            'Wednesday', 
+            'Thursday', 
+            'Friday', 
+            'Saturday', 
+            'Sunday'
+        ];
+        const weekListAbbr = [
+            'Mon.',
+            'Tue.',
+            'Wed.',
+            'Thu.',
+            'Fri.',
+            'Sat.',
+            'Sun.'
+        ];
+        const monthList = [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December'
+        ];
+        const monthListAbbr = [
+            'Jan.',
+            'Feb.',
+            'Mar.',
+            'Apr.',
+            'May',
+            'Jun.',
+            'Jul.',
+            'Aug.',
+            'Sep.',
+            'Oct.',
+            'Nov.',
+            'Dec.'
+        ];
 
-        switch (fmt) {
-            case 0:
-                format = "yyyy-MM-dd hh:mm:ss"
-                break;
-            case 1:
-                format = "yyyy/MM/dd hh:mm:ss"
-                break;
-            case 2:
-                format = "yyyy-MM-dd"
-                break;
-            case 3:
-                format = "hh:mm:ss"
-                break;
-            case 4:
-                format = "yyyy-MM-dd ww hh:mm:ss"
-                break;
-        }
-
-        let year = 2000 + ds1339.year;
+        let year = ds1339.year;
         let month = ds1339.month;
-        let day = ds1339.date;
+        let date = ds1339.date;
         let hours = ds1339.hours;
         let minutes = ds1339.minutes;
         let seconds = ds1339.seconds;
         let week = ds1339.day;
 
-        let monthstr = month >= 10 ? month.toString() : ('0' + month);
-        let daystr = day >= 10 ? day.toString() : ('0' + day);
-        let hoursstr = hours >= 10 ? hours.toString() : ('0' + hours);
-        let minutesstr = minutes >= 10 ? minutes.toString() : ('0' + minutes);
-        let secondsstr = seconds >= 10 ? seconds.toString() : ('0' + seconds);
+        let yearStr = year >= 10 ? year.toString() : ('0' + year);
+        let monthStr = month >= 10 ? month.toString() : ('0' + month);
+        let dateStr = date >= 10 ? date.toString() : ('0' + date);
+        let hoursStr = hours >= 10 ? hours.toString() : ('0' + hours);
+        let minutesStr = minutes >= 10 ? minutes.toString() : ('0' + minutes);
+        let secondsStr = seconds >= 10 ? seconds.toString() : ('0' + seconds);
 
-        if (format.indexOf('yyyy') !== -1) {
-            format = format.replace('yyyy', year.toString());
+        if (format.indexOf('YYYY') !== -1) {
+            format = format.replace('YYYY', '20' + yearStr);
         } else {
-            format = format.replace('yy', (year + '').slice(2));
+            format = format.replace('YY', yearStr);
+        }
+
+        if (format.indexOf('MMMM') !== -1) {
+            format = format.replace('MMMM', monthList[month - 1]);
+        } else if (format.indexOf('MMM') !== -1) {
+            format = format.replace('MMM', monthListAbbr[month - 1]);
+        }else {
+            format = format.replace('MM', monthStr);
         }
         
-        format = format.replace('mm', minutesstr);
-        format = format.replace('dd', daystr);
-        format = format.replace('hh', hoursstr);
-        format = format.replace('MM', monthstr);
-        format = format.replace('ss', secondsstr);
-        format = format.replace('W', weekCN[week - 1]);
-        format = format.replace('ww', weekEN[week - 1]);
-        format = format.replace('w', week.toString());
+        format = format.replace('DD', dateStr);
+        format = format.replace('hh', hoursStr);
+        format = format.replace('mm', minutesStr);
+        format = format.replace('ss', secondsStr);
+
+        if (format.indexOf('WWW') !== -1) {
+            format = format.replace('WWW', weekList[week - 1]);
+        } else {
+            format = format.replace('WW', weekListAbbr[week - 1]);
+        }
 
         return format;
     }
 
     /**
-     * TODO: read rtc time.
+     * Read rtc time item.
      */
     //% group="Time" 
     //% weight=50
-    //% blockId=rtc_read block="time %type"
+    //% blockId=rtc_read block="time %item"
     //% help=rtc/read-time
-    export function readTime(type: TimeItem = TimeItem.SECONDS): number {
-        switch (type) {
+    export function time(item: TimeItem = TimeItem.SECONDS): number {
+        switch (item) {
             case TimeItem.SECONDS:
                 return ds1339.seconds;
             case TimeItem.MINUTE:
