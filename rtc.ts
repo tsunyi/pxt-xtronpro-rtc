@@ -17,8 +17,44 @@ enum TimeItem {
     YEAR
 }
 
+enum HourPeriod {
+    //% block="24-hour"
+    HOUR24,
+    //% block="am"
+    AM,
+    //% block="pm"
+    PM
+}
+
+enum WeekItem {
+    //% block="repeat"
+    REPEAT,
+    //% block="monday"
+    MONDAY,
+    //% block="tuesday"
+    TUESDAY,
+    //% block="wednesday"
+    WEDNESDAY,
+    //% block="thursday"
+    THURSDAY,
+    //% block="friday"
+    FRIDAY,
+    //% block="saturday"
+    SATURDAY,
+    //% block="sunday"
+    SUNDAY
+}
+
+declare namespace pins {
+    /**
+     * Pin Alarm Interupt
+     */
+    //% fixedInstance shim=pxt::lookupPinCfg(CFG_PIN_D0)
+    const AlarmIntPin: DigitalInOutPin;
+}
+
 //% color="#20b2aa" weight=75 icon="\uf133" block="RTC"
-//% groups='["Time","Create", "Basic","Separator", "Theme", "Digits" ]'
+//% groups='["Time","Alarm"]'
 namespace rtc {
 
     const DS1339_I2C_ADDRESS = 0x68  //I2C address of the DS1339
@@ -183,6 +219,76 @@ namespace rtc {
 
             return (reg >> 4 & 0x0F) * 10 + (reg & 0x0F)
         }
+
+        setAlarmSeconds(sec: number, mask: number) {
+            this.connect();
+
+            if (!this.isConnected)
+                return;
+
+            const reg = ((mask & 0x01) << 7) + ((sec / 10 & 0x07) << 4) + (sec % 10 & 0x0F);
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS, reg);
+        }
+
+        setAlarmMinutes(minu: number, mask: number) {
+            this.connect();
+
+            if (!this.isConnected)
+                return;
+
+            const reg = ((mask & 0x01) << 7) + (minu & 0x80) + ((minu / 10 & 0x07) << 4) + (minu % 10 & 0x0F);
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES, reg);
+        }
+
+        setAlarmHours(hour: number, mask: number, is12Clock: number, isPm: number) {
+            this.connect();
+
+            if (!this.isConnected)
+                return;
+
+            let reg;
+
+            if (is12Clock) {
+                reg = ((mask & 0x01) << 7) + ((is12Clock & 0x01) << 6) + ((isPm & 0x01) << 5) + ((hour / 10 & 0x01) << 4) + (hour % 10 & 0x0F);
+            } else {
+                reg = ((mask & 0x01) << 7) + ((hour / 10 & 0x03) << 4) + (hour % 10 & 0x0F);
+            }
+
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS, reg);
+        }
+
+        setAlarmDayDate(val: number, mask: number, isDay: number) {
+            this.connect();
+
+            if (!this.isConnected)
+                return;
+
+            let reg;
+
+            if (isDay) {
+                reg = ((mask & 0x01) << 7) + ((isDay & 0x01) << 6) + (val & 0x0F);
+            } else {
+                reg = ((mask & 0x01) << 7) + ((val / 10 & 0x03) << 4) + (val % 10 & 0x0F);
+            }
+
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE, reg);
+        }
+
+        setAlarmInt(int: boolean) {
+            let reg;
+
+            if (int) {
+                reg = 0x1D;
+            } else {
+                reg = 0x1C;
+            }
+
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_CONTROL, reg);
+        }
+
+        clearAlarmIntStatus() {
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_STATUS, 0);
+        }
     }
 
     export const ds1339 = new DS1339();
@@ -311,6 +417,89 @@ namespace rtc {
         }
         return 0;
     }
+
+    /**
+     * Set Alarm Week, Hours, Minutes, Seconds
+     */
+    //% group="Alarm"
+    //% weight=50
+    //% blockId=rtcSetAlarmWeek block="set alarm week %week %period hours %hour minutes %minu seconds %sec %enable"
+    //% enable.shadow="toggleOnOff"
+    export function setAlarmWeek(week: WeekItem, period: HourPeriod, hour: number, minu: number, sec: number, enable: boolean) {
+        if (week == WeekItem.REPEAT) {
+            ds1339.setAlarmDayDate(0, 1, 1);
+        } else {
+            ds1339.setAlarmDayDate(week, 0, 1);
+        }
+
+        if (period == HourPeriod.HOUR24) {
+            ds1339.setAlarmHours(hour, 0, 0, 0);
+        } else {
+            if (period == HourPeriod.AM) {
+                ds1339.setAlarmHours(hour, 0, 1, 0);
+            } else {
+                ds1339.setAlarmHours(hour, 0, 1, 1);
+            }
+        }
+
+        ds1339.setAlarmMinutes(minu, 0);
+        ds1339.setAlarmSeconds(sec, 0);
+
+        ds1339.setAlarmInt(enable);
+    }
+
+    /**
+     * Set Alarm Date, Hours, Minutes, Seconds
+     */
+    //% group="Alarm"
+    //% weight=50
+    //% blockId=rtcSetAlarmDate block="set alarm date %date %period hours %hour minutes %minu seconds %sec %enable"
+    //% date.fieldEditor="numberdropdown" ms.fieldOptions.decompileLiterals=true
+    //% date.fieldOptions.data='[["repeat", 0]]'
+    //% enable.shadow="toggleOnOff"
+    export function setAlarmDate(date: number = 1, period: HourPeriod, hour: number, minu: number, sec: number, enable: boolean) {
+        if (date == 0) {
+            ds1339.setAlarmDayDate(0, 1, 0);
+        } else {
+            ds1339.setAlarmDayDate(date, 0, 0);
+        }
+
+        if (period == HourPeriod.HOUR24) {
+            ds1339.setAlarmHours(hour, 0, 0, 0);
+        } else {
+            if (period == HourPeriod.AM) {
+                ds1339.setAlarmHours(hour, 0, 1, 0);
+            } else {
+                ds1339.setAlarmHours(hour, 0, 1, 1);
+            }
+        }
+
+        ds1339.setAlarmMinutes(minu, 0);
+        ds1339.setAlarmSeconds(sec, 0);
+
+        ds1339.setAlarmInt(enable);
+    }
+
+    /**
+     * Run some code when Alarm Interupt
+     */
+    //% weight=99 blockGap=8 help=controller/button/on-event
+    //% blockId=alarminteruptonevent block="on alarmed"
+    //% group="Alarm"
+    export function onEvent(handler: () => void) {
+        pins.AlarmIntPin.setPull(PinPullMode.PullUp);
+        pins.AlarmIntPin.onEvent(PinEvent.PulseHigh, handler);
+    }
+
+    /**
+     * Clear Alarm Status
+     */
+    //% blockId=clearalarmstatus block="clear alarm status"
+    //% group="Alarm"
+    export function clearAlarmStatus() {
+        ds1339.clearAlarmIntStatus();
+    }
+    
 
     function bin2bcd(v: number) {
         return ((v / 10) << 4) + (v % 10);
