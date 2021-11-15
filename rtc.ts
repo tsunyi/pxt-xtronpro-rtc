@@ -488,7 +488,7 @@ namespace rtc {
     //% group="Alarm"
     export function onEvent(handler: () => void) {
         pins.AlarmIntPin.setPull(PinPullMode.PullUp);
-        pins.AlarmIntPin.onEvent(PinEvent.PulseHigh, handler);
+        pins.AlarmIntPin.onEvent(PinEvent.Fall, handler);
     }
 
     /**
@@ -500,21 +500,22 @@ namespace rtc {
         ds1339.clearAlarmIntStatus();
     }
     
-
     function bin2bcd(v: number) {
         return ((v / 10) << 4) + (v % 10);
     }
 
-    export function writeRtcTime(year: number, month: number, date: number, hour: number, minutes: number, seconds: number) {
+    export function setTime(year: number, month: number, date: number, day: number, is12Clock: number, isPM: number, hour: number, minutes: number, seconds: number) {
         let buf = pins.createBuffer(8);
+
         buf[0] = 0x00;
         buf[1] = bin2bcd(seconds);
         buf[2] = bin2bcd(minutes);
-        buf[3] = bin2bcd(hour);
-        buf[4] = bin2bcd(0);
+        buf[3] = bin2bcd(hour) + ((is12Clock & 0x01) << 6) + ((isPM & 0x01) << 5);
+        buf[4] = bin2bcd(day);
         buf[5] = bin2bcd(date);
         buf[6] = bin2bcd(month);
         buf[7] = bin2bcd(year);
+        
         pins.i2cWriteBuffer(DS1339_I2C_ADDRESS, buf);
     }
 }
