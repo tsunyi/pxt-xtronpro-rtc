@@ -45,6 +45,15 @@ enum WeekItem {
     SUNDAY
 }
 
+enum RepeatMode {
+    //% block="everyday"
+    EVERYDAY,
+    //% block="everyweek"
+    EVERYWEEK,
+    //% block="everymonth"
+    EVERYMONTH
+}
+
 declare namespace pins {
     /**
      * Pin Alarm Interupt
@@ -230,6 +239,17 @@ namespace rtc {
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS, reg);
         }
 
+        getAlarmSeconds() {
+            this.connect();
+
+            if (!this.isConnected)
+                return 0;
+
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS);
+
+            return (reg >> 4 & 0x07) * 10 + (reg & 0x0F)
+        }
+
         setAlarmMinutes(minu: number, mask: number) {
             this.connect();
 
@@ -238,6 +258,17 @@ namespace rtc {
 
             const reg = ((mask & 0x01) << 7) + (minu & 0x80) + ((minu / 10 & 0x07) << 4) + (minu % 10 & 0x0F);
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES, reg);
+        }
+
+        getAlarmMinutes() {
+            this.connect();
+
+            if (!this.isConnected)
+                return 0;
+
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES);
+
+            return (reg >> 4 & 0x07) * 10 + (reg & 0x0F)
         }
 
         setAlarmHours(hour: number, mask: number, is12Clock: number, isPm: number) {
@@ -257,6 +288,51 @@ namespace rtc {
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS, reg);
         }
 
+        getAlarmHours() {
+            this.connect();
+
+            if (!this.isConnected)
+                return 0;
+
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS);
+            const flag12 = reg >> 6 & 0x01;
+
+            if (flag12) {
+                const isPM = reg >> 5 & 0x01;
+
+                return (reg >> 4 & 0x01) * 10 + (reg & 0x0F);
+            } else {
+                return (reg >> 5 & 0x01) * 20 + (reg >> 4 & 0x01) * 10 + (reg & 0x0F);
+            }
+        }
+
+        isAlarm12HourClock() {
+            this.connect();
+
+            if (!this.isConnected)
+                return 0;
+
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS);
+
+            return reg >> 6 & 0x01;
+        }
+
+        isAlarmHourPM() {
+            this.connect();
+
+            if (!this.isConnected)
+                return 0;
+
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS);
+            const flag12 = reg >> 6 & 0x01;
+
+            if (flag12) {
+                return reg >> 5 & 0x01;
+            } else {
+                return undefined;
+            }
+        }
+
         setAlarmDayDate(val: number, mask: number, isDay: number) {
             this.connect();
 
@@ -272,6 +348,59 @@ namespace rtc {
             }
 
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE, reg);
+        }
+
+        getAlarmRepeatMode() {
+            this.connect();
+
+            if (!this.isConnected)
+                return 0;
+
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+            const mode = reg >> 7 & 0x01;
+            const isDay = reg >> 6 & 0x01;
+
+            if (mode) {
+                return RepeatMode.EVERYDAY;
+            } else {
+                if (isDay) {
+                    return RepeatMode.EVERYWEEK;
+                } else {
+                    return RepeatMode.EVERYMONTH;
+                }
+            }
+        }
+
+        getAlarmDate() {
+            this.connect();
+
+            if (!this.isConnected)
+                return 0;
+
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+            const isDay = reg >> 6 & 0x01;
+
+            if (isDay) {
+                return undefined;
+            } else {
+                return (reg >> 4 & 0x03) * 10 + (reg & 0x0F);
+            }
+        }
+
+        getAlarmDay() {
+            this.connect();
+
+            if (!this.isConnected)
+                return 0;
+
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+            const isDay = reg >> 6 & 0x01;
+
+            if (isDay) {
+                return reg & 0x0F;
+            } else {
+                return undefined;
+            }
         }
 
         setAlarmInt(int: boolean) {
@@ -478,6 +607,33 @@ namespace rtc {
         ds1339.setAlarmSeconds(sec, 0);
 
         ds1339.setAlarmInt(enable);
+    }
+
+    /**
+     * Get Alarm Repeat Mode
+     */
+    //% group="Alarm"
+    //% blockId=rtcGetAlarmRepeatMode block="alarm repeat mode"
+    export function getAlarmRepeatMode(): RepeatMode {
+        return ds1339.getAlarmRepeatMode();
+    }
+
+    /**
+     * Get Alarm Repeat Date
+     */
+    //% group="Alarm"
+    //% blockId=rtcGetAlarmRepeatDate block="alarm repeat date"
+    export function getAlarmRepeatDate() {
+        return ds1339.getAlarmDate();
+    }
+
+    /**
+     * Get Alarm Repeat Day
+     */
+    //% group="Alarm"
+    //% blockId=rtcGetAlarmRepeatDay block="alarm repeat day"
+    export function getAlarmRepeatDay() {
+        return ds1339.getAlarmDay();
     }
 
     /**

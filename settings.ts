@@ -6,6 +6,12 @@ enum SelectOption {
     WEEKDAY
 }
 
+enum RepeatOption {
+    EVERYDAY,
+    WEEKDAY,
+    MONTHDAY
+}
+
 namespace rtc {
     class Configurator {
         private hourFormat: number;
@@ -133,7 +139,7 @@ namespace rtc {
 
             while (!this.validateDate(date)) {
                 game.consoleOverlay.setVisible(true);
-                console.log ("Validate failed, input again!")
+                console.log ("Validation failed, input again!")
                 pause(1000);
                 game.consoleOverlay.setVisible(false);
                 date = game.askForNumber('Date (YYYYMMDD)', 8);
@@ -166,7 +172,7 @@ namespace rtc {
 
             while (!this.validateTime(time)) {
                 game.consoleOverlay.setVisible(true);
-                console.log("Validate failed, input again!")
+                console.log("Validation failed, input again!")
                 pause(1000);
                 game.consoleOverlay.setVisible(false);
                 time = game.askForNumber('Time (hhmmss)', 6);
@@ -190,12 +196,235 @@ namespace rtc {
         }
     }
 
+    class AlarmConfigurator {
+        private hourFormat: number;
+        private hourPeriod: number;
+        private weekDay: number;
+        private selectOption: number;
+        private repeatOption: number;
+
+        constructor() {
+            this.hourFormat = 0;
+            this.hourPeriod = 0;
+            this.weekDay = 0;
+            this.selectOption = SelectOption.IDLE;
+            this.repeatOption = 0;
+        }
+
+        private select() {
+            if (this.selectOption == SelectOption.IDLE) {
+                if (this.repeatOption == RepeatOption.EVERYDAY) {
+                    console.log("Selected: Repead everyday")
+                } else if (this.repeatOption == RepeatOption.WEEKDAY) {
+                    console.log("Selected: Repead on a day of the week")
+                } else if (this.repeatOption == RepeatOption.MONTHDAY) {
+                    console.log("Selected: Repead on a day of the month")
+                }
+            } else if (this.selectOption == SelectOption.HOURFORMAT) {
+                if (this.hourFormat) {
+                    console.log("Selected: 12-hour");
+                } else {
+                    console.log("Selected: 24-hour");
+                }
+            } else if (this.selectOption == SelectOption.HOURPERIOD) {
+                if (this.hourPeriod) {
+                    console.log("Selected: PM");
+                } else {
+                    console.log("Selected: AM");
+                }
+            } else if (this.selectOption == SelectOption.WEEKDAY) {
+                switch (this.weekDay) {
+                    case 0:
+                        console.log("Selected: Mon.");
+                        break;
+                    case 1:
+                        console.log("Selected: Tue.");
+                        break;
+                    case 2:
+                        console.log("Selected: Wed.");
+                        break;
+                    case 3:
+                        console.log("Selected: Thu.");
+                        break;
+                    case 4:
+                        console.log("Selected: Fri.");
+                        break;
+                    case 5:
+                        console.log("Selected: Sat.");
+                        break;
+                    case 6:
+                        console.log("Selected: Sun.");
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private validateDate(date: number): boolean {
+            if (date >= 1 && date <= 31) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        private validateTime(time: number): boolean {
+            const hour = time / 10000;
+            const minutes = time / 100 % 100;
+            const seconds = time % 100;
+
+            if (time > 0 && minutes >= 0 && minutes <= 59 && seconds >= 0 && seconds <= 59) {
+                if (this.hourFormat) {
+                    if (hour >= 1 && hour <= 12) {
+                        return true;
+                    }
+                } else {
+                    if (hour >= 0 && hour <= 23) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        main() {
+            controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
+                if (this.selectOption == SelectOption.IDLE) {
+                    this.repeatOption = this.repeatOption - 1;
+                    this.repeatOption = (this.repeatOption + 3) % 3;
+                } else if (this.selectOption == SelectOption.HOURFORMAT) {
+                    this.hourFormat = this.hourFormat + 1;
+                    this.hourFormat = this.hourFormat % 2;
+                } else if (this.selectOption == SelectOption.HOURPERIOD) {
+                    this.hourPeriod = this.hourPeriod + 1;
+                    this.hourPeriod = this.hourPeriod % 2;
+                } else if (this.selectOption == SelectOption.WEEKDAY) {
+                    this.weekDay = this.weekDay - 1;
+                    this.weekDay = (this.weekDay + 7) % 7;
+                }
+
+                this.select();
+            })
+            controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
+                if (this.selectOption == SelectOption.IDLE) {
+                    this.repeatOption = this.repeatOption + 1;
+                    this.repeatOption = this.repeatOption % 3;
+                } else if (this.selectOption == SelectOption.HOURFORMAT) {
+                    this.hourFormat = this.hourFormat + 1;
+                    this.hourFormat = this.hourFormat % 2;
+                } else if (this.selectOption == SelectOption.HOURPERIOD) {
+                    this.hourPeriod = this.hourPeriod + 1;
+                    this.hourPeriod = this.hourPeriod % 2;
+                } else if (this.selectOption == SelectOption.WEEKDAY) {
+                    this.weekDay = this.weekDay + 1;
+                    this.weekDay = this.weekDay % 7;
+                }
+
+                this.select();
+            })
+
+            controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
+                game.popScene();
+                game.consoleOverlay.setVisible(false);
+            });
+
+            game.consoleOverlay.setVisible(true);
+            this.selectOption = SelectOption.IDLE;
+            console.log("up/down: select");
+            console.log("repeat mode");
+            console.log("A: OK");
+            console.log(" ");
+            this.select();
+            pauseUntil(() => !controller.A.isPressed(), 30000);
+            pauseUntil(() => controller.A.isPressed(), 30000);
+
+            let date = 0;
+
+            if (this.repeatOption == RepeatOption.WEEKDAY) {
+                game.consoleOverlay.setVisible(true);
+                this.selectOption = SelectOption.WEEKDAY;
+                console.log("up/down: select");
+                console.log("week day");
+                console.log("A: OK");
+                console.log(" ");
+                this.select();
+                pauseUntil(() => !controller.A.isPressed(), 30000);
+                pauseUntil(() => controller.A.isPressed(), 30000);
+                this.weekDay = this.weekDay + 1;
+            } else if (this.repeatOption == RepeatOption.MONTHDAY) {
+                date = game.askForNumber('Date (DD)', 2);
+
+                while (!this.validateDate(date)) {
+                    game.consoleOverlay.setVisible(true);
+                    console.log("Validation failed, input again!")
+                    pause(1000);
+                    game.consoleOverlay.setVisible(false);
+                    date = game.askForNumber('Date (DD)', 2);
+                }
+            }
+
+            game.consoleOverlay.setVisible(true);
+            this.selectOption = SelectOption.HOURFORMAT;
+            console.log("up/down: select");
+            console.log("hour format: 24/12");
+            console.log("A: OK");
+            console.log(" ");
+            this.select();
+            pauseUntil(() => !controller.A.isPressed(), 30000);
+            pauseUntil(() => controller.A.isPressed(), 30000);
+
+            if (this.hourFormat) {
+                this.selectOption = SelectOption.HOURPERIOD
+                console.log("up/down: select");
+                console.log("hour period: AM/PM");
+                console.log("A: OK");
+                console.log(" ");
+                this.select();
+                pauseUntil(() => !controller.A.isPressed(), 30000);
+                pauseUntil(() => controller.A.isPressed(), 30000);
+            }
+
+            game.consoleOverlay.setVisible(false);
+
+            let time = game.askForNumber("Time (hhmmss)", 6);
+
+            while (!this.validateTime(time)) {
+                game.consoleOverlay.setVisible(true);
+                console.log("Validation failed, input again!")
+                pause(1000);
+                game.consoleOverlay.setVisible(false);
+                time = game.askForNumber('Time (hhmmss)', 6);
+            }
+
+            if (this.repeatOption == RepeatOption.EVERYDAY) {
+                rtc.setAlarmDate(0, this.hourFormat + this.hourPeriod, time / 10000, time / 100 % 100, time % 100, true);
+            } else if (this.repeatOption == RepeatOption.WEEKDAY) {
+                rtc.setAlarmWeek(this.weekDay, this.hourFormat + this.hourPeriod, time / 10000, time / 100 % 100, time % 100, true);
+            } else if (this.repeatOption == RepeatOption.MONTHDAY) {
+                rtc.setAlarmDate(date, this.hourFormat + this.hourPeriod, time / 10000, time / 100 % 100, time % 100, true);
+            }
+
+            game.popScene();
+            game.consoleOverlay.setVisible(false);
+        }
+    }
+
     function rtcSystemMenu() {
         scene.systemMenu.closeMenu();
         game.pushScene();
         game.consoleOverlay.setVisible(true);
         const config = new Configurator();
         config.main()
+    }
+
+    function rtcSystemMenuAlarm() {
+        scene.systemMenu.closeMenu();
+        game.pushScene();
+        game.consoleOverlay.setVisible(false);
+        const config = new AlarmConfigurator();
+        config.main();
     }
 
     scene.systemMenu.addEntry(
@@ -219,5 +448,28 @@ namespace rtc {
             . . . . . . . . . 6 . . . . . 6 .
             . . . . . . . . . 6 . . . . . 6 .
             . . . . . . . . . . 6 6 6 6 6 . .
+        `);
+
+    scene.systemMenu.addEntry(
+        () => "Alarm",
+        () => rtcSystemMenuAlarm(),
+        img`
+            . . . . . . . . . . . . . . . . .
+            . . . 6 6 . . 6 6 6 . . 6 6 . . .
+            . . 6 6 . . . . 6 . . . . 6 6 . .
+            . . 6 . . 6 6 6 6 6 6 6 . . 6 . .
+            . . . . 6 . . . . . . . 6 . . . .
+            . . . 6 . . . . 6 . . . . 6 . . .
+            . . . 6 . . . . 6 . . . . 6 . . .
+            . . . 6 . . . . 6 . . . . 6 . . .
+            . . . 6 . . . . 6 . . . . 6 . . .
+            . . . 6 . . . . . 6 6 6 . 6 . . .
+            . . . 6 . . . . . . . . . 6 . . .
+            . . . 6 . . . . . . . . . 6 . . .
+            . . . . 6 . . . . . . . 6 . . . .
+            . . . . . 6 6 6 6 6 6 6 . . . . .
+            . . . . 6 . . . . . . . 6 . . . .
+            . . . 6 . . . . . . . . . 6 . . .
+            . . . . . . . . . . . . . . . . .
         `);
 }
