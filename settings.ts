@@ -62,6 +62,38 @@ namespace rtc {
             }
         }
 
+        private validateDate(date: number): boolean {
+            const year = date / 10000;
+            const month = date / 100 % 100;
+            const day = date % 100;
+
+            if (date > 0 && year >= 1 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        private validateTime(time: number): boolean {
+            const hour = time / 10000;
+            const minutes = time / 100 % 100;
+            const seconds = time % 100;
+
+            if (time > 0 && minutes >= 0 && minutes <= 59 && seconds >= 0 && seconds <= 59) {
+                if (this.hourFormat) {
+                    if (hour >= 1 && hour <= 12) {
+                        return true;
+                    }
+                } else {
+                    if (hour >= 0 && hour <= 23) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         main() {
             controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
                 if (this.selectOption == SelectOption.HOURFORMAT) {
@@ -97,9 +129,15 @@ namespace rtc {
                 game.consoleOverlay.setVisible(false);
             });
 
-            const year = game.askForNumber('Year', 4);
-            const month = game.askForNumber('Month', 2);
-            const date = game.askForNumber('Date', 2);
+            let date = game.askForNumber('Date (YYYYMMDD)', 8);
+
+            while (!this.validateDate(date)) {
+                game.consoleOverlay.setVisible(true);
+                console.log ("Validate failed, input again!")
+                pause(1000);
+                game.consoleOverlay.setVisible(false);
+                date = game.askForNumber('Date (YYYYMMDD)', 8);
+            }
 
             game.consoleOverlay.setVisible(true);
             this.selectOption = SelectOption.HOURFORMAT;
@@ -124,9 +162,15 @@ namespace rtc {
 
             game.consoleOverlay.setVisible(false);
 
-            const hours = game.askForNumber('Hours', 2);
-            const minutes = game.askForNumber('Minutes', 2);
-            const seconds = game.askForNumber('Seconds', 2);
+            let time = game.askForNumber("Time (hhmmss)", 6);
+
+            while (!this.validateTime(time)) {
+                game.consoleOverlay.setVisible(true);
+                console.log("Validate failed, input again!")
+                pause(1000);
+                game.consoleOverlay.setVisible(false);
+                time = game.askForNumber('Time (hhmmss)', 6);
+            }
 
             game.consoleOverlay.setVisible(true);
             this.selectOption = SelectOption.WEEKDAY;
@@ -139,7 +183,7 @@ namespace rtc {
             pauseUntil(() => controller.A.isPressed(), 30000);
             this.weekDay = this.weekDay + 1;
 
-            rtc.setTime(year % 100, month, date, this.weekDay, this.hourFormat, this.hourPeriod, hours, minutes, seconds);
+            rtc.setTime(date / 10000 % 100, date / 100 % 100, date % 100, this.weekDay, this.hourFormat, this.hourPeriod, time / 10000, time / 100 % 100, time % 100);
             
             game.popScene();
             game.consoleOverlay.setVisible(false);

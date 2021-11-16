@@ -504,6 +504,11 @@ namespace rtc {
         return ((v / 10) << 4) + (v % 10);
     }
 
+    /**
+     * Set Time
+     */
+    //% block
+    //% group="Time"
     export function setTime(year: number, month: number, date: number, day: number, is12Clock: number, isPM: number, hour: number, minutes: number, seconds: number) {
         let buf = pins.createBuffer(8);
 
