@@ -1,34 +1,23 @@
 // Add your code here
 
 enum TimeItem {
-    //% block="seconds"
-    SECONDS,
+    //% block="second"
+    SECOND,
     //% block="minute"
     MINUTE,
     //% block="hour"
     HOUR,
     //% block="day of the week"
+    WEEKDAY,
+    //% block="day"
     DAY,
-    //% block="date"
-    DATE,
     //% block="month"
     MONTH,
     //% block="year"
     YEAR
 }
 
-enum HourPeriod {
-    //% block="24-hour"
-    HOUR24,
-    //% block="am"
-    AM,
-    //% block="pm"
-    PM
-}
-
 enum WeekItem {
-    //% block="repeat"
-    REPEAT,
     //% block="monday"
     MONDAY,
     //% block="tuesday"
@@ -48,10 +37,12 @@ enum WeekItem {
 enum RepeatMode {
     //% block="everyday"
     EVERYDAY,
-    //% block="everyweek"
-    EVERYWEEK,
-    //% block="everymonth"
-    EVERYMONTH
+    //% block="everyhour"
+    EVERYHOUR,
+    //% block="everyminute"
+    EVERYMINUTE,
+    //% block="everysecond"
+    EVERYSECOND
 }
 
 declare namespace pins {
@@ -118,7 +109,7 @@ namespace rtc {
             this.connect();
         }
 
-        get seconds() {
+        get second() {
             this.connect();
 
             if (!this.isConnected)
@@ -129,7 +120,7 @@ namespace rtc {
             return (reg >> 4 & 0x07) * 10 + (reg & 0x0F)
         }
 
-        get minutes() {
+        get minute() {
             this.connect();
 
             if (!this.isConnected)
@@ -140,25 +131,7 @@ namespace rtc {
             return (reg >> 4 & 0x07) * 10 + (reg & 0x0F)
         }
 
-        get hours() {
-            this.connect();
-
-            if (!this.isConnected)
-                return 0;
-
-            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_HOURS);
-            const flag12 = reg >> 6 & 0x01;
-
-            if (flag12) {
-                const isPM = reg >> 5 & 0x01;
-
-                return (reg >> 4 & 0x01) * 10 + (reg & 0x0F);
-            } else {
-                return (reg >> 5 & 0x01) * 20 + (reg >> 4 & 0x01) * 10 + (reg & 0x0F);
-            }
-        }
-
-        get is12HourClock() {
+        get hour() {
             this.connect();
 
             if (!this.isConnected)
@@ -166,26 +139,10 @@ namespace rtc {
 
             const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_HOURS);
 
-            return reg >> 6 & 0x01;
+            return (reg >> 5 & 0x01) * 20 + (reg >> 4 & 0x01) * 10 + (reg & 0x0F);
         }
 
-        get isPM() {
-            this.connect();
-
-            if (!this.isConnected)
-                return 0;
-
-            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_HOURS);
-            const flag12 = reg >> 6 & 0x01;
-
-            if (flag12) {
-                return reg >> 5 & 0x01;
-            } else {
-                return undefined;
-            }
-        }
-
-        get day() {
+        get weekday() {
             this.connect();
 
             if (!this.isConnected)
@@ -196,7 +153,7 @@ namespace rtc {
             return reg & 0x07;
         }
 
-        get date() {
+        get day() {
             this.connect();
 
             if (!this.isConnected)
@@ -229,17 +186,17 @@ namespace rtc {
             return (reg >> 4 & 0x0F) * 10 + (reg & 0x0F)
         }
 
-        setAlarmSeconds(sec: number, mask: number) {
+        set alarmSecond(sec: number) {
             this.connect();
 
             if (!this.isConnected)
                 return;
 
-            const reg = ((mask & 0x01) << 7) + ((sec / 10 & 0x07) << 4) + (sec % 10 & 0x0F);
+            const reg = ((sec / 10 & 0x07) << 4) + (sec % 10 & 0x0F);
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS, reg);
         }
 
-        getAlarmSeconds() {
+        get alarmSecond() {
             this.connect();
 
             if (!this.isConnected)
@@ -250,17 +207,17 @@ namespace rtc {
             return (reg >> 4 & 0x07) * 10 + (reg & 0x0F)
         }
 
-        setAlarmMinutes(minu: number, mask: number) {
+        set alarmMinute(minu: number) {
             this.connect();
 
             if (!this.isConnected)
                 return;
 
-            const reg = ((mask & 0x01) << 7) + (minu & 0x80) + ((minu / 10 & 0x07) << 4) + (minu % 10 & 0x0F);
+            const reg = ((minu / 10 & 0x07) << 4) + (minu % 10 & 0x0F);
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES, reg);
         }
 
-        getAlarmMinutes() {
+        get alarmMinute() {
             this.connect();
 
             if (!this.isConnected)
@@ -271,42 +228,18 @@ namespace rtc {
             return (reg >> 4 & 0x07) * 10 + (reg & 0x0F)
         }
 
-        setAlarmHours(hour: number, mask: number, is12Clock: number, isPm: number) {
+        set alarmHour(hour: number) {
             this.connect();
 
             if (!this.isConnected)
                 return;
 
-            let reg;
-
-            if (is12Clock) {
-                reg = ((mask & 0x01) << 7) + ((is12Clock & 0x01) << 6) + ((isPm & 0x01) << 5) + ((hour / 10 & 0x01) << 4) + (hour % 10 & 0x0F);
-            } else {
-                reg = ((mask & 0x01) << 7) + ((hour / 10 & 0x03) << 4) + (hour % 10 & 0x0F);
-            }
+            const reg = ((hour / 10 & 0x03) << 4) + (hour % 10 & 0x0F);
 
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS, reg);
         }
 
-        getAlarmHours() {
-            this.connect();
-
-            if (!this.isConnected)
-                return 0;
-
-            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS);
-            const flag12 = reg >> 6 & 0x01;
-
-            if (flag12) {
-                const isPM = reg >> 5 & 0x01;
-
-                return (reg >> 4 & 0x01) * 10 + (reg & 0x0F);
-            } else {
-                return (reg >> 5 & 0x01) * 20 + (reg >> 4 & 0x01) * 10 + (reg & 0x0F);
-            }
-        }
-
-        isAlarm12HourClock() {
+        get alarmHour() {
             this.connect();
 
             if (!this.isConnected)
@@ -314,64 +247,50 @@ namespace rtc {
 
             const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS);
 
-            return reg >> 6 & 0x01;
+            return (reg >> 5 & 0x01) * 20 + (reg >> 4 & 0x01) * 10 + (reg & 0x0F);
         }
 
-        isAlarmHourPM() {
-            this.connect();
-
-            if (!this.isConnected)
-                return 0;
-
-            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS);
-            const flag12 = reg >> 6 & 0x01;
-
-            if (flag12) {
-                return reg >> 5 & 0x01;
-            } else {
-                return undefined;
-            }
-        }
-
-        setAlarmDayDate(val: number, mask: number, isDay: number) {
+        set alarmWeekday(val: number) {
             this.connect();
 
             if (!this.isConnected)
                 return;
 
-            let reg;
-
-            if (isDay) {
-                reg = ((mask & 0x01) << 7) + ((isDay & 0x01) << 6) + (val & 0x0F);
-            } else {
-                reg = ((mask & 0x01) << 7) + ((val / 10 & 0x03) << 4) + (val % 10 & 0x0F);
-            }
+            // const mask = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+            const reg = /* (mask & 0x80) + */ 0x40 + (val & 0x0F);
 
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE, reg);
         }
 
-        getAlarmRepeatMode() {
+        get alarmWeekday() {
             this.connect();
 
             if (!this.isConnected)
                 return 0;
 
             const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
-            const mode = reg >> 7 & 0x01;
-            const isDay = reg >> 6 & 0x01;
+            const isWeekday = reg >> 6 & 0x01;
 
-            if (mode) {
-                return RepeatMode.EVERYDAY;
+            if (isWeekday) {
+                return reg & 0x0F;
             } else {
-                if (isDay) {
-                    return RepeatMode.EVERYWEEK;
-                } else {
-                    return RepeatMode.EVERYMONTH;
-                }
+                return undefined;
             }
         }
 
-        getAlarmDate() {
+        set alarmDay(val: number) {
+            this.connect();
+
+            if (!this.isConnected)
+                return;
+
+            // const mask = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+            const reg = /* (mask & 0x80) + */ ((val / 10 & 0x03) << 4) + (val & 0x0F);
+
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE, reg);
+        }
+
+        get alarmDay() {
             this.connect();
 
             if (!this.isConnected)
@@ -387,23 +306,70 @@ namespace rtc {
             }
         }
 
-        getAlarmDay() {
+        set alarmRepeatMode(mode: RepeatMode) {
+            this.connect();
+
+            if (!this.isConnected)
+                return;
+
+            let day = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+            let hour = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS);
+            let minute = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES);
+            let second = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS);
+
+            if (mode == RepeatMode.EVERYDAY) {
+                day = day + 0x80;
+                hour = hour & 0x7F;
+                minute = minute & 0x7F;
+                second = second & 0x7F;
+            } else if (mode == RepeatMode.EVERYHOUR) {
+                day = day + 0x80;
+                hour = hour + 0x80;
+                minute = minute & 0x7F;
+                second = second & 0x7F;
+            } else if (mode == RepeatMode.EVERYMINUTE) {
+                day = day + 0x80;
+                hour = hour + 0x80;
+                minute = minute + 0x80;
+                second = second & 0x7F;
+            } else if (mode == RepeatMode.EVERYSECOND) {
+                day = day + 0x80;
+                hour = hour + 0x80;
+                minute = minute + 0x80;
+                second = second + 0x80;
+            }
+
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE, day);
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS, hour);
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES, minute);
+            pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS, second);
+        }
+
+        get alarmRepeatMode() {
             this.connect();
 
             if (!this.isConnected)
                 return 0;
 
-            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
-            const isDay = reg >> 6 & 0x01;
+            let day = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+            let hour = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_HOURS);
+            let minute = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES);
+            let second = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS);
 
-            if (isDay) {
-                return reg & 0x0F;
+            if (second & 0x80) {
+                return RepeatMode.EVERYSECOND;
+            } else if (minute & 0x80) {
+                return RepeatMode.EVERYMINUTE;
+            } else if (hour & 0x80) {
+                return RepeatMode.EVERYHOUR;
+            } else if (day & 0x80) {
+                return RepeatMode.EVERYDAY;
             } else {
                 return undefined;
             }
         }
 
-        setAlarmInt(int: boolean) {
+        set alarmInt(int: boolean) {
             let reg;
 
             if (int) {
@@ -413,6 +379,16 @@ namespace rtc {
             }
 
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_CONTROL, reg);
+        }
+
+        get alarmInt() {
+            const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_CONTROL);
+
+            if (reg & 0x01) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         clearAlarmIntStatus() {
@@ -426,10 +402,11 @@ namespace rtc {
      * Read string format time.
      */
     //% group="Time"
-    //% block weight=50
+    //% weight=99
     //% blockId=rtc_read_format_time block="string format time %format "
+    //% format.defl="hh:mm"
     //% help=rtc/read-format-time
-    export function stringFormatTime(format: string = "hh:mm"): string {
+    export function stringFormatTime(format: string): string {
         const weekList = [
             'Monday', 
             'Tuesday', 
@@ -479,11 +456,11 @@ namespace rtc {
 
         let year = ds1339.year;
         let month = ds1339.month;
-        let date = ds1339.date;
-        let hours = ds1339.hours;
-        let minutes = ds1339.minutes;
-        let seconds = ds1339.seconds;
-        let week = ds1339.day;
+        let date = ds1339.day;
+        let hours = ds1339.hour;
+        let minutes = ds1339.minute;
+        let seconds = ds1339.second;
+        let week = ds1339.weekday;
 
         let yearStr = year >= 10 ? year.toString() : ('0' + year);
         let monthStr = month >= 10 ? month.toString() : ('0' + month);
@@ -524,21 +501,21 @@ namespace rtc {
      * Read rtc time item.
      */
     //% group="Time" 
-    //% weight=50
-    //% blockId=rtc_read block="time %item"
+    //% weight=100
+    //% blockId=rtc_read block="%item"
     //% help=rtc/read-time
-    export function time(item: TimeItem = TimeItem.SECONDS): number {
+    export function time(item: TimeItem = TimeItem.SECOND): number {
         switch (item) {
-            case TimeItem.SECONDS:
-                return ds1339.seconds;
+            case TimeItem.SECOND:
+                return ds1339.second;
             case TimeItem.MINUTE:
-                return ds1339.minutes;
+                return ds1339.minute;
             case TimeItem.HOUR:
-                return ds1339.hours;
+                return ds1339.hour;
+            case TimeItem.WEEKDAY:
+                return ds1339.weekday;
             case TimeItem.DAY:
                 return ds1339.day;
-            case TimeItem.DATE:
-                return ds1339.date;
             case TimeItem.MONTH:
                 return ds1339.month;
             case TimeItem.YEAR:
@@ -548,92 +525,70 @@ namespace rtc {
     }
 
     /**
-     * Set Alarm Week, Hours, Minutes, Seconds
+     * Set Alarm, Hour, Minute, Second
      */
     //% group="Alarm"
-    //% weight=50
-    //% blockId=rtcSetAlarmWeek block="set alarm week %week %period hours %hour minutes %minu seconds %sec %enable"
-    //% enable.shadow="toggleOnOff"
-    export function setAlarmWeek(week: WeekItem, period: HourPeriod, hour: number, minu: number, sec: number, enable: boolean) {
-        if (week == WeekItem.REPEAT) {
-            ds1339.setAlarmDayDate(0, 1, 1);
-        } else {
-            ds1339.setAlarmDayDate(week, 0, 1);
-        }
+    //% weight=100
+    //% blockId=rtcSetAlarmWeek block="set alarm %mode hour %hour minute %minu second %sec %enable"
+    //% hour.defl=0 hour.min=0 hour.max=23
+    //% minu.defl=0 minu.min=0 minu.max=59
+    //% sec.defl=0 sec.min=0 sec.max=59
+    //% enable.shadow="toggleOnOff" enable.defl=true
+    export function setAlarm(mode: RepeatMode, hour: number, minu: number, sec: number, enable: boolean) {
+        ds1339.alarmHour = hour;
+        ds1339.alarmMinute = minu;
+        ds1339.alarmSecond = sec;
+        ds1339.alarmRepeatMode = mode;
 
-        if (period == HourPeriod.HOUR24) {
-            ds1339.setAlarmHours(hour, 0, 0, 0);
-        } else {
-            if (period == HourPeriod.AM) {
-                ds1339.setAlarmHours(hour, 0, 1, 0);
-            } else {
-                ds1339.setAlarmHours(hour, 0, 1, 1);
-            }
-        }
-
-        ds1339.setAlarmMinutes(minu, 0);
-        ds1339.setAlarmSeconds(sec, 0);
-
-        ds1339.setAlarmInt(enable);
+        ds1339.alarmInt = enable;
     }
 
     /**
-     * Set Alarm Date, Hours, Minutes, Seconds
+     * Set Alarm Week, Hour, Minute, Second
      */
     //% group="Alarm"
-    //% weight=50
-    //% blockId=rtcSetAlarmDate block="set alarm date %date %period hours %hour minutes %minu seconds %sec %enable"
-    //% date.fieldEditor="numberdropdown" ms.fieldOptions.decompileLiterals=true
-    //% date.fieldOptions.data='[["repeat", 0]]'
-    //% enable.shadow="toggleOnOff"
-    export function setAlarmDate(date: number = 1, period: HourPeriod, hour: number, minu: number, sec: number, enable: boolean) {
-        if (date == 0) {
-            ds1339.setAlarmDayDate(0, 1, 0);
-        } else {
-            ds1339.setAlarmDayDate(date, 0, 0);
-        }
+    //% weight=96
+    //% blockId=rtcSetAlarmWeekday block="set alarm week %week hour %hour minute %minu second %sec %enable"
+    //% hour.defl=0 hour.min=0 hour.max=23
+    //% minu.defl=0 minu.min=0 minu.max=59
+    //% sec.defl=0 sec.min=0 sec.max=59
+    //% enable.shadow="toggleOnOff" enable.defl=true
+    export function setAlarmWeekday(week: WeekItem, hour: number, minu: number, sec: number, enable: boolean) {
+        ds1339.alarmWeekday = week + 1;
+        ds1339.alarmHour = hour;
+        ds1339.alarmMinute = minu;
+        ds1339.alarmSecond = sec;
 
-        if (period == HourPeriod.HOUR24) {
-            ds1339.setAlarmHours(hour, 0, 0, 0);
-        } else {
-            if (period == HourPeriod.AM) {
-                ds1339.setAlarmHours(hour, 0, 1, 0);
-            } else {
-                ds1339.setAlarmHours(hour, 0, 1, 1);
-            }
-        }
+        ds1339.alarmInt = enable;
+    }
 
-        ds1339.setAlarmMinutes(minu, 0);
-        ds1339.setAlarmSeconds(sec, 0);
+    /**
+     * Set Alarm Date, Hour, Minute, Second
+     */
+    //% group="Alarm"
+    //% weight=97
+    //% blockId=rtcSetAlarmDay block="set alarm day %date hour %hour minute %minu second %sec %enable"
+    //% hour.defl=0 hour.min=0 hour.max=23
+    //% minu.defl=0 minu.min=0 minu.max=59
+    //% sec.defl=0 sec.min=0 sec.max=59
+    //% enable.shadow="toggleOnOff" enable.defl=true
+    export function setAlarmDay(date: number = 1, hour: number, minu: number, sec: number, enable: boolean) {
+        ds1339.alarmDay = date;
+        ds1339.alarmHour = hour;
+        ds1339.alarmMinute = minu;
+        ds1339.alarmSecond = sec;
 
-        ds1339.setAlarmInt(enable);
+        ds1339.alarmInt = enable;
     }
 
     /**
      * Get Alarm Repeat Mode
      */
+    //% weight=
     //% group="Alarm"
     //% blockId=rtcGetAlarmRepeatMode block="alarm repeat mode"
     export function getAlarmRepeatMode(): RepeatMode {
-        return ds1339.getAlarmRepeatMode();
-    }
-
-    /**
-     * Get Alarm Repeat Date
-     */
-    //% group="Alarm"
-    //% blockId=rtcGetAlarmRepeatDate block="alarm repeat date"
-    export function getAlarmRepeatDate() {
-        return ds1339.getAlarmDate();
-    }
-
-    /**
-     * Get Alarm Repeat Day
-     */
-    //% group="Alarm"
-    //% blockId=rtcGetAlarmRepeatDay block="alarm repeat day"
-    export function getAlarmRepeatDay() {
-        return ds1339.getAlarmDay();
+        return ds1339.alarmRepeatMode;
     }
 
     /**
@@ -650,6 +605,7 @@ namespace rtc {
     /**
      * Clear Alarm Status
      */
+    //% weight=98
     //% blockId=clearalarmstatus block="clear alarm status"
     //% group="Alarm"
     export function clearAlarmStatus() {
@@ -663,17 +619,24 @@ namespace rtc {
     /**
      * Set Time
      */
-    //% block
+    //% weight=97
+    //% blockId=settime block="set time year %year month %month day %day weekday %weekday hour %hour minute %minute second %second"
+    //% year.defl=2021
+    //% month.defl=1 month.min=1 month.max=12
+    //% day.defl=1 day.min=1 day.max=31
+    //% hour.defl=0 hour.min=0 hour.max=23
+    //% minute.defl=0 minute.min=0 minute.max=59
+    //% second.defl=0 second.min=0 second.max=59
     //% group="Time"
-    export function setTime(year: number, month: number, date: number, day: number, is12Clock: number, isPM: number, hour: number, minutes: number, seconds: number) {
+    export function setTime(year: number, month: number, day: number, weekday: WeekItem, hour: number, minute: number, second: number) {
         let buf = pins.createBuffer(8);
 
         buf[0] = 0x00;
-        buf[1] = bin2bcd(seconds);
-        buf[2] = bin2bcd(minutes);
-        buf[3] = bin2bcd(hour) + ((is12Clock & 0x01) << 6) + ((isPM & 0x01) << 5);
-        buf[4] = bin2bcd(day);
-        buf[5] = bin2bcd(date);
+        buf[1] = bin2bcd(second);
+        buf[2] = bin2bcd(minute);
+        buf[3] = bin2bcd(hour);
+        buf[4] = bin2bcd(weekday + 1);
+        buf[5] = bin2bcd(day);
         buf[6] = bin2bcd(month);
         buf[7] = bin2bcd(year);
         
