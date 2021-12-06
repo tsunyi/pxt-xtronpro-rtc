@@ -255,6 +255,7 @@ namespace rtc {
             this.select();
             pauseUntil(() => !controller.A.isPressed(), 30000);
             pauseUntil(() => controller.A.isPressed(), 30000);
+            game.consoleOverlay.setVisible(false);
 
             let date = 0;
 

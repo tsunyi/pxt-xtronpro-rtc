@@ -318,25 +318,25 @@ namespace rtc {
             let second = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS);
 
             if (mode == RepeatMode.EVERYDAY) {
-                day = day + 0x80;
+                day = day | 0x80;
                 hour = hour & 0x7F;
                 minute = minute & 0x7F;
                 second = second & 0x7F;
             } else if (mode == RepeatMode.EVERYHOUR) {
-                day = day + 0x80;
-                hour = hour + 0x80;
+                day = day | 0x80;
+                hour = hour | 0x80;
                 minute = minute & 0x7F;
                 second = second & 0x7F;
             } else if (mode == RepeatMode.EVERYMINUTE) {
-                day = day + 0x80;
-                hour = hour + 0x80;
-                minute = minute + 0x80;
+                day = day | 0x80;
+                hour = hour | 0x80;
+                minute = minute | 0x80;
                 second = second & 0x7F;
             } else if (mode == RepeatMode.EVERYSECOND) {
-                day = day + 0x80;
-                hour = hour + 0x80;
-                minute = minute + 0x80;
-                second = second + 0x80;
+                day = day | 0x80;
+                hour = hour | 0x80;
+                minute = minute | 0x80;
+                second = second | 0x80;
             }
 
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE, day);
