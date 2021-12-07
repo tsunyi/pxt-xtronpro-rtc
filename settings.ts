@@ -54,8 +54,8 @@ namespace rtc {
         }
 
         private validateDate(date: number): boolean {
-            const year = date / 10000;
-            const month = date / 100 % 100;
+            const year = Math.floor(date / 10000);
+            const month = Math.floor(date / 100 % 100);
             const day = date % 100;
 
             if (date > 0 && year >= 1 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
@@ -66,8 +66,8 @@ namespace rtc {
         }
 
         private validateTime(time: number): boolean {
-            const hour = time / 10000;
-            const minutes = time / 100 % 100;
+            const hour = Math.floor(time / 10000);
+            const minutes = Math.floor(time / 100 % 100);
             const seconds = time % 100;
 
             if (time > 0 && minutes >= 0 && minutes <= 59 && seconds >= 0 && seconds <= 59) {
@@ -204,8 +204,8 @@ namespace rtc {
         }
 
         private validateTime(time: number): boolean {
-            const hour = time / 10000;
-            const minutes = time / 100 % 100;
+            const hour = Math.floor(time / 10000);
+            const minutes = Math.floor(time / 100 % 100);
             const seconds = time % 100;
 
             if (time > 0 && minutes >= 0 && minutes <= 59 && seconds >= 0 && seconds <= 59) {
