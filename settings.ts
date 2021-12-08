@@ -297,13 +297,13 @@ namespace rtc {
             } else if (this.repeatOption == RepeatOption.WEEKDAY) {
                 rtc.setAlarmWeekday(this.weekDay, time / 10000, time / 100 % 100, time % 100, true);
             } else if (this.repeatOption == RepeatOption.EVERYDAY) {
-                rtc.setAlarm(RepeatMode.EVERYDAY, time / 10000, time / 100 % 100, time % 100, true);
+                rtc.setAlarm(RepeatMode.EVERYDAY, time / 10000, time / 100 % 100, time % 100, true, 0, 0);
             } else if (this.repeatOption == RepeatOption.EVERYHOUR) {
-                rtc.setAlarm(RepeatMode.EVERYHOUR, time / 10000, time / 100 % 100, time % 100, true);
+                rtc.setAlarm(RepeatMode.EVERYHOUR, time / 10000, time / 100 % 100, time % 100, true, 0, 0);
             } else if (this.repeatOption == RepeatOption.EVERYMINUTE) {
-                rtc.setAlarm(RepeatMode.EVERYMINUTE, time / 10000, time / 100 % 100, time % 100, true);
+                rtc.setAlarm(RepeatMode.EVERYMINUTE, time / 10000, time / 100 % 100, time % 100, true, 0, 0);
             } else if (this.repeatOption == RepeatOption.EVERYSECOND) {
-                rtc.setAlarm(RepeatMode.EVERYSECOND, time / 10000, time / 100 % 100, time % 100, true);
+                rtc.setAlarm(RepeatMode.EVERYSECOND, time / 10000, time / 100 % 100, time % 100, true, 0, 0);
             }
             
             game.popScene();

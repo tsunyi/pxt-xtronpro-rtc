@@ -7,7 +7,7 @@ enum TimeItem {
     MINUTE,
     //% block="hour"
     HOUR,
-    //% block="day of the week"
+    //% block="weekday"
     WEEKDAY,
     //% block="day"
     DAY,
@@ -15,6 +15,19 @@ enum TimeItem {
     MONTH,
     //% block="year"
     YEAR
+}
+
+enum AlarmItem {
+    //% block="second"
+    SECOND,
+    //% block="minute"
+    MINUTE,
+    //% block="hour"
+    HOUR,
+    //% block="weekday"
+    WEEKDAY,
+    //% block="day"
+    DAY
 }
 
 enum WeekItem {
@@ -37,6 +50,10 @@ enum WeekItem {
 enum RepeatMode {
     //% block="everyday"
     EVERYDAY,
+    //% block="everymonth"
+    EVERYMONTH,
+    //% block="everyweek"
+    EVERYWEEK,
     //% block="everyhour"
     EVERYHOUR,
     //% block="everyminute"
@@ -53,7 +70,7 @@ declare namespace pins {
     const AlarmIntPin: DigitalInOutPin;
 }
 
-//% color="#20b2aa" weight=75 icon="\uf133" block="RTC"
+//% color="#7a5327" weight=75 icon="\uf133" block="RTC"
 //% groups='["Time","Alarm"]'
 namespace rtc {
 
@@ -87,6 +104,10 @@ namespace rtc {
         constructor() {
             this.isConnected = false;
             this.start();
+
+            if (this.isConnected) {
+                this.clearAlarmIntStatus();
+            }
         }
 
         private connect() {
@@ -317,7 +338,17 @@ namespace rtc {
             let minute = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES);
             let second = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS);
 
-            if (mode == RepeatMode.EVERYDAY) {
+            if (mode == RepeatMode.EVERYMONTH) {
+                day = day & 0x3F;
+                hour = hour & 0x7F;
+                minute = minute & 0x7F;
+                second = second & 0x7F;
+            } else if (mode == RepeatMode.EVERYWEEK) {
+                day = (day & 0x3F) | 0x40;
+                hour = hour & 0x7F;
+                minute = minute & 0x7F;
+                second = second & 0x7F;
+            } else if (mode == RepeatMode.EVERYDAY) {
                 day = day | 0x80;
                 hour = hour & 0x7F;
                 minute = minute & 0x7F;
@@ -364,8 +395,10 @@ namespace rtc {
                 return RepeatMode.EVERYHOUR;
             } else if (day & 0x80) {
                 return RepeatMode.EVERYDAY;
+            } else if (day & 0x40) {
+                return RepeatMode.EVERYWEEK;
             } else {
-                return undefined;
+                return RepeatMode.EVERYMONTH;
             }
         }
 
@@ -525,20 +558,28 @@ namespace rtc {
     }
 
     /**
-     * Set Alarm, Hour, Minute, Second
+     * Set Alarm, RepeadMode, Hour, Minute, Second, Day, Weekday
      */
     //% group="Alarm"
     //% weight=100
-    //% blockId=rtcSetAlarmWeek block="set alarm %mode hour %hour minute %minu second %sec %enable"
+    //% blockId=rtcSetAlarmWeek block="set alarm %mode hour %hour minute %minu second %sec %enable || day %day weekday %weekday"
     //% hour.defl=0 hour.min=0 hour.max=23
     //% minu.defl=0 minu.min=0 minu.max=59
     //% sec.defl=0 sec.min=0 sec.max=59
     //% enable.shadow="toggleOnOff" enable.defl=true
-    export function setAlarm(mode: RepeatMode, hour: number, minu: number, sec: number, enable: boolean) {
+    //% day.defl=1 day.min=1 day.max=31
+    //% expandableArgumentMode="toggle"
+    export function setAlarm(mode: RepeatMode, hour: number, minu: number, sec: number, enable: boolean, day?: number, weekday?: WeekItem) {
         ds1339.alarmHour = hour;
         ds1339.alarmMinute = minu;
         ds1339.alarmSecond = sec;
         ds1339.alarmRepeatMode = mode;
+        
+        if (mode == RepeatMode.EVERYMONTH) {
+            ds1339.alarmDay = day;
+        } else if (mode == RepeatMode.EVERYWEEK) {
+            ds1339.alarmWeekday = weekday + 1;
+        }
 
         ds1339.alarmInt = enable;
     }
@@ -546,13 +587,6 @@ namespace rtc {
     /**
      * Set Alarm Week, Hour, Minute, Second
      */
-    //% group="Alarm"
-    //% weight=96
-    //% blockId=rtcSetAlarmWeekday block="set alarm week %week hour %hour minute %minu second %sec %enable"
-    //% hour.defl=0 hour.min=0 hour.max=23
-    //% minu.defl=0 minu.min=0 minu.max=59
-    //% sec.defl=0 sec.min=0 sec.max=59
-    //% enable.shadow="toggleOnOff" enable.defl=true
     export function setAlarmWeekday(week: WeekItem, hour: number, minu: number, sec: number, enable: boolean) {
         ds1339.alarmWeekday = week + 1;
         ds1339.alarmHour = hour;
@@ -565,13 +599,6 @@ namespace rtc {
     /**
      * Set Alarm Date, Hour, Minute, Second
      */
-    //% group="Alarm"
-    //% weight=97
-    //% blockId=rtcSetAlarmDay block="set alarm day %date hour %hour minute %minu second %sec %enable"
-    //% hour.defl=0 hour.min=0 hour.max=23
-    //% minu.defl=0 minu.min=0 minu.max=59
-    //% sec.defl=0 sec.min=0 sec.max=59
-    //% enable.shadow="toggleOnOff" enable.defl=true
     export function setAlarmDay(date: number = 1, hour: number, minu: number, sec: number, enable: boolean) {
         ds1339.alarmDay = date;
         ds1339.alarmHour = hour;
@@ -584,11 +611,18 @@ namespace rtc {
     /**
      * Get Alarm Repeat Mode
      */
-    //% weight=
+    //% weight=95
     //% group="Alarm"
     //% blockId=rtcGetAlarmRepeatMode block="alarm repeat mode"
     export function getAlarmRepeatMode(): RepeatMode {
         return ds1339.alarmRepeatMode;
+    }
+
+    //% weight=94
+    //% group="Alarm"
+    //% blockId=repeat_mode_enum block="%arg"
+    export function repeatModeEnumShim(arg: RepeatMode): RepeatMode {
+        return arg;
     }
 
     /**
@@ -610,6 +644,99 @@ namespace rtc {
     //% group="Alarm"
     export function clearAlarmStatus() {
         ds1339.clearAlarmIntStatus();
+    }
+
+    /**
+     * Read string format alarm.
+     */
+    //% group="Alarm"
+    //% weight=96
+    //% blockId=rtc_read_format_alarm block="string format alarm %format "
+    //% format.defl="hh:mm"
+    //% help=rtc/read-format-alarm
+    export function stringFormatAlarm(format: string): string {
+        const weekList = [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday'
+        ];
+        const weekListAbbr = [
+            'Mon.',
+            'Tue.',
+            'Wed.',
+            'Thu.',
+            'Fri.',
+            'Sat.',
+            'Sun.'
+        ];
+
+        let date = ds1339.alarmDay;
+        let hours = ds1339.alarmHour;
+        let minutes = ds1339.alarmMinute;
+        let seconds = ds1339.alarmSecond;
+        let week = ds1339.alarmWeekday;
+
+        let dateStr = date >= 10 ? date.toString() : ('0' + date);
+        let hoursStr = hours >= 10 ? hours.toString() : ('0' + hours);
+        let minutesStr = minutes >= 10 ? minutes.toString() : ('0' + minutes);
+        let secondsStr = seconds >= 10 ? seconds.toString() : ('0' + seconds);
+
+        const mask = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+
+        if (mask & 0x40) {
+            if (week > 0 && week <= 7) {
+                if (format.indexOf('WWW') !== -1) {
+                    format = format.replace('WWW', weekList[week - 1]);
+                } else {
+                    format = format.replace('WW', weekListAbbr[week - 1]);
+                }
+            }
+        } else {
+            format = format.replace('DD', dateStr);
+        }
+
+        format = format.replace('hh', hoursStr);
+        format = format.replace('mm', minutesStr);
+        format = format.replace('ss', secondsStr);
+
+        return format;
+    }
+
+    /**
+     * Read rtc alarm item.
+     */
+    //% group="Alarm" 
+    //% weight=97
+    //% blockId=rtc_read_alarm block="alarm %item"
+    //% help=rtc/read-alarm
+    export function alarm(item: AlarmItem = AlarmItem.SECOND): number {
+        const mask = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+
+        switch (item) {
+            case AlarmItem.SECOND:
+                return ds1339.alarmSecond;
+            case AlarmItem.MINUTE:
+                return ds1339.alarmMinute;
+            case AlarmItem.HOUR:
+                return ds1339.alarmHour;
+            case AlarmItem.WEEKDAY:
+                if (mask & 0x40) {
+                    return ds1339.alarmWeekday;
+                } else {
+                    return undefined;
+                }
+            case AlarmItem.DAY:
+                if (mask & 0x40) {
+                    return undefined;
+                } else {
+                    return ds1339.alarmDay;
+                }
+        }
+        return 0;
     }
     
     function bin2bcd(v: number) {
