@@ -442,7 +442,7 @@ namespace rtc {
      */
     //% block = "string format time %format "
     //% blockId=rtc_read_format_time 
-    //% help=github:pxt-xtronpro-rtc/docs/string-format-time
+    //% help=github:xtronpro-rtc/docs/string-format-time
     //% format.defl="hh:mm"
     //% weight=99
     //% group="Time"
