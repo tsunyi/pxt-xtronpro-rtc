@@ -444,7 +444,7 @@ namespace rtc {
     //% weight=99
     //% blockId=rtc_read_format_time block="string format time %format "
     //% format.defl="hh:mm"
-    //% help=rtc/read-format-time
+    //% help=github:pxt-xtronpro-rtc/docs/string-format-time
     export function stringFormatTime(format: string): string {
         const weekList = [
             'Monday', 
@@ -619,8 +619,8 @@ namespace rtc {
      */
     //% weight=95
     //% group="Alarm"
-    //% blockId=rtcGetAlarmRepeatMode block="alarm repeat mode"
-    export function getAlarmRepeatMode(): RepeatMode {
+    //% blockId=rtcAlarmRepeatMode block="alarm repeat mode"
+    export function alarmRepeatMode(): RepeatMode {
         return ds1339.alarmRepeatMode;
     }
 
