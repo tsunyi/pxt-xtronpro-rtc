@@ -59,4 +59,6 @@ let mySprite = sprites.create(img`
 mySprite.sayText(rtc.stringFormatTime("hh:mm"))
 ```
 
-## See also #seealso
+```package
+rtc=github:tsunyi/pxt-xtronpro-rtc
+```

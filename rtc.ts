@@ -438,10 +438,10 @@ namespace rtc {
     export const ds1339 = new DS1339();
 
     /**
-     * Read string format time.
+     * Returns the string format time.
      */
-    //% block = "string format time %format "
-    //% blockId=rtc_read_format_time 
+    //% block="string format time %format "
+    //% blockId=rtc_string_format_time 
     //% help=github:xtronpro-rtc/docs/string-format-time
     //% format.defl="hh:mm"
     //% weight=99
@@ -538,12 +538,13 @@ namespace rtc {
     }
 
     /**
-     * Read rtc time item.
+     * Returns the time item.
      */
-    //% group="Time" 
+    //% blockId=rtc_time
+    //% block="%item"
+    //% help=github:xtronpro-rtc/docs/time
     //% weight=100
-    //% blockId=rtc_read block="%item"
-    //% help=rtc/read-time
+    //% group="Time" 
     export function time(item: TimeItem = TimeItem.SECOND): number {
         switch (item) {
             case TimeItem.SECOND:

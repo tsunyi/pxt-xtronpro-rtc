@@ -10,7 +10,8 @@
         "assets.json",
         "rtc.ts",
         "settings.ts",
-        "docs/string-format-time.md"
+        "docs/string-format-time.md",
+        "docs/time.md"
     ],
     "testFiles": [
         "test.ts"
