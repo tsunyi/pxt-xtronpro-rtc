@@ -1,16 +1,17 @@
 // Add your code here
 enum SelectOption {
-    IDLE,
-    WEEKDAY
+    IDLE = 1,
+    WEEKDAY = 2
 }
 
 enum RepeatOption {
-    MONTHDAY,
-    WEEKDAY,
-    EVERYDAY,
-    EVERYHOUR,
-    EVERYMINUTE,
-    EVERYSECOND
+    EVERYDAY = 1,
+    EVERYMONTH = 2,
+    EVERYWEEK = 3,
+    EVERYHOUR = 4,
+    EVERYMINUTE = 5,
+    EVERYSECOND = 6,
+    OFF = 7
 }
 
 namespace rtc {
@@ -148,23 +149,25 @@ namespace rtc {
         constructor() {
             this.weekDay = 0;
             this.selectOption = SelectOption.IDLE;
-            this.repeatOption = 0;
+            this.repeatOption = RepeatOption.EVERYDAY;
         }
 
         private select() {
             if (this.selectOption == SelectOption.IDLE) {
-                if (this.repeatOption == RepeatOption.MONTHDAY) {
-                    console.log("Selected: Repead on a day of the month")
-                } else if (this.repeatOption == RepeatOption.WEEKDAY) {
-                    console.log("Selected: Repead on a day of the week")
+                if (this.repeatOption == RepeatOption.EVERYMONTH) {
+                    console.log("Selected: Repead on a day of the month");
+                } else if (this.repeatOption == RepeatOption.EVERYWEEK) {
+                    console.log("Selected: Repead on a day of the week");
                 } else if (this.repeatOption == RepeatOption.EVERYDAY) {
-                    console.log("Selected: Repead everyday")
+                    console.log("Selected: Repead everyday");
                 } else if (this.repeatOption == RepeatOption.EVERYHOUR) {
-                    console.log("Selected: Repead everyhour")
+                    console.log("Selected: Repead everyhour");
                 } else if (this.repeatOption == RepeatOption.EVERYMINUTE) {
-                    console.log("Selected: Repead everyminute")
+                    console.log("Selected: Repead everyminute");
                 } else if (this.repeatOption == RepeatOption.EVERYSECOND) {
-                    console.log("Selected: Repead everysecond")
+                    console.log("Selected: Repead everysecond");
+                } else if (this.repeatOption == RepeatOption.OFF) {
+                    console.log("Selected: Off");
                 }
             } if (this.selectOption == SelectOption.WEEKDAY) {
                 switch (this.weekDay) {
@@ -221,7 +224,7 @@ namespace rtc {
             controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
                 if (this.selectOption == SelectOption.IDLE) {
                     this.repeatOption = this.repeatOption - 1;
-                    this.repeatOption = (this.repeatOption + 6) % 6;
+                    this.repeatOption = this.repeatOption == 0 ? 7 : this.repeatOption;
                 } else if (this.selectOption == SelectOption.WEEKDAY) {
                     this.weekDay = this.weekDay - 1;
                     this.weekDay = (this.weekDay + 7) % 7;
@@ -232,7 +235,7 @@ namespace rtc {
             controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
                 if (this.selectOption == SelectOption.IDLE) {
                     this.repeatOption = this.repeatOption + 1;
-                    this.repeatOption = this.repeatOption % 6;
+                    this.repeatOption = this.repeatOption == 8 ? 1 : this.repeatOption;
                 } else if (this.selectOption == SelectOption.WEEKDAY) {
                     this.weekDay = this.weekDay + 1;
                     this.weekDay = this.weekDay % 7;
@@ -257,9 +260,15 @@ namespace rtc {
             pauseUntil(() => controller.A.isPressed(), 30000);
             game.consoleOverlay.setVisible(false);
 
+            if (this.repeatOption == RepeatOption.OFF) {
+                rtc.ds1339.alarmInt = false;
+                game.popScene();
+                return;
+            }
+
             let date = 0;
 
-            if (this.repeatOption == RepeatOption.WEEKDAY) {
+            if (this.repeatOption == RepeatOption.EVERYWEEK) {
                 game.consoleOverlay.setVisible(true);
                 this.selectOption = SelectOption.WEEKDAY;
                 console.log("up/down: select");
@@ -270,7 +279,8 @@ namespace rtc {
                 pauseUntil(() => !controller.A.isPressed(), 30000);
                 pauseUntil(() => controller.A.isPressed(), 30000);
                 this.weekDay = this.weekDay + 1;
-            } else if (this.repeatOption == RepeatOption.MONTHDAY) {
+                game.consoleOverlay.setVisible(false);
+            } else if (this.repeatOption == RepeatOption.EVERYMONTH) {
                 date = game.askForNumber('Date (DD)', 2);
 
                 while (!this.validateDate(date)) {
@@ -292,9 +302,9 @@ namespace rtc {
                 time = game.askForNumber('Time (hhmmss)', 6);
             }
 
-            if (this.repeatOption == RepeatOption.MONTHDAY) {
+            if (this.repeatOption == RepeatOption.EVERYMONTH) {
                 rtc.setAlarmDay(date, time / 10000, time / 100 % 100, time % 100, true);
-            } else if (this.repeatOption == RepeatOption.WEEKDAY) {
+            } else if (this.repeatOption == RepeatOption.EVERYWEEK) {
                 rtc.setAlarmWeekday(this.weekDay, time / 10000, time / 100 % 100, time % 100, true);
             } else if (this.repeatOption == RepeatOption.EVERYDAY) {
                 rtc.setAlarm(RepeatMode.EVERYDAY, time / 10000, time / 100 % 100, time % 100, true, 0, 0);

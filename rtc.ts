@@ -2,64 +2,64 @@
 
 enum TimeItem {
     //% block="second"
-    SECOND,
+    SECOND = 1,
     //% block="minute"
-    MINUTE,
+    MINUTE = 2,
     //% block="hour"
-    HOUR,
+    HOUR = 3,
     //% block="weekday"
-    WEEKDAY,
+    WEEKDAY = 4,
     //% block="day"
-    DAY,
+    DAY = 5,
     //% block="month"
-    MONTH,
+    MONTH = 6,
     //% block="year"
-    YEAR
+    YEAR = 7
 }
 
 enum AlarmItem {
     //% block="second"
-    SECOND,
+    SECOND = 1,
     //% block="minute"
-    MINUTE,
+    MINUTE = 2,
     //% block="hour"
-    HOUR,
+    HOUR = 3,
     //% block="weekday"
-    WEEKDAY,
+    WEEKDAY = 4,
     //% block="day"
-    DAY
+    DAY = 5
 }
 
 enum WeekItem {
     //% block="monday"
-    MONDAY,
+    MONDAY = 1,
     //% block="tuesday"
-    TUESDAY,
+    TUESDAY = 2,
     //% block="wednesday"
-    WEDNESDAY,
+    WEDNESDAY = 3,
     //% block="thursday"
-    THURSDAY,
+    THURSDAY = 4,
     //% block="friday"
-    FRIDAY,
+    FRIDAY = 5,
     //% block="saturday"
-    SATURDAY,
+    SATURDAY = 6,
     //% block="sunday"
-    SUNDAY
+    SUNDAY = 7
 }
 
 enum RepeatMode {
     //% block="everyday"
-    EVERYDAY,
+    EVERYDAY = 1,
     //% block="everymonth"
-    EVERYMONTH,
+    EVERYMONTH = 2,
     //% block="everyweek"
-    EVERYWEEK,
+    EVERYWEEK = 3,
     //% block="everyhour"
-    EVERYHOUR,
+    EVERYHOUR = 4,
     //% block="everyminute"
-    EVERYMINUTE,
+    EVERYMINUTE = 5,
     //% block="everysecond"
-    EVERYSECOND
+    EVERYSECOND = 6
 }
 
 declare namespace pins {
@@ -171,6 +171,9 @@ namespace rtc {
 
             const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_DAY);
 
+            if (!reg)
+                return 1;
+
             return reg & 0x07;
         }
 
@@ -192,6 +195,9 @@ namespace rtc {
                 return 1;
 
             const reg = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_MONTH);
+
+            if (!reg)
+                return 1;
 
             return (reg >> 4 & 0x01) * 10 + (reg & 0x0F)
         }
@@ -578,7 +584,7 @@ namespace rtc {
         if (mode == RepeatMode.EVERYMONTH) {
             ds1339.alarmDay = day;
         } else if (mode == RepeatMode.EVERYWEEK) {
-            ds1339.alarmWeekday = weekday + 1;
+            ds1339.alarmWeekday = weekday;
         }
 
         ds1339.alarmInt = enable;
@@ -588,7 +594,7 @@ namespace rtc {
      * Set Alarm Week, Hour, Minute, Second
      */
     export function setAlarmWeekday(week: WeekItem, hour: number, minu: number, sec: number, enable: boolean) {
-        ds1339.alarmWeekday = week + 1;
+        ds1339.alarmWeekday = week;
         ds1339.alarmHour = hour;
         ds1339.alarmMinute = minu;
         ds1339.alarmSecond = sec;
@@ -738,6 +744,17 @@ namespace rtc {
         }
         return 0;
     }
+
+    /**
+     * Read rtc alarm int.
+     */
+    //% group="Alarm" 
+    //% weight=93
+    //% blockId=rtc_read_alarm_int block="is alarm on"
+    //% help=rtc/read-alarm-int
+    export function isAlarm(): boolean {
+        return ds1339.alarmInt;
+    }
     
     function bin2bcd(v: number) {
         return ((v / 10) << 4) + (v % 10);
@@ -762,7 +779,7 @@ namespace rtc {
         buf[1] = bin2bcd(second);
         buf[2] = bin2bcd(minute);
         buf[3] = bin2bcd(hour);
-        buf[4] = bin2bcd(weekday + 1);
+        buf[4] = bin2bcd(weekday);
         buf[5] = bin2bcd(day);
         buf[6] = bin2bcd(month);
         buf[7] = bin2bcd(year);
