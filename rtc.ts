@@ -440,11 +440,12 @@ namespace rtc {
     /**
      * Read string format time.
      */
-    //% group="Time"
-    //% weight=99
-    //% blockId=rtc_read_format_time block="string format time %format "
-    //% format.defl="hh:mm"
+    //% block = "string format time %format "
+    //% blockId=rtc_read_format_time 
     //% help=github:pxt-xtronpro-rtc/docs/string-format-time
+    //% format.defl="hh:mm"
+    //% weight=99
+    //% group="Time"
     export function stringFormatTime(format: string): string {
         const weekList = [
             'Monday', 
