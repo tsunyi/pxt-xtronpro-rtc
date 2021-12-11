@@ -2,64 +2,64 @@
 
 enum TimeItem {
     //% block="second"
-    SECOND = 1,
+    Second = 1,
     //% block="minute"
-    MINUTE = 2,
+    Minute = 2,
     //% block="hour"
-    HOUR = 3,
+    Hour = 3,
     //% block="weekday"
-    WEEKDAY = 4,
+    Weekday = 4,
     //% block="day"
-    DAY = 5,
+    Day = 5,
     //% block="month"
-    MONTH = 6,
+    Month = 6,
     //% block="year"
-    YEAR = 7
+    Year = 7
 }
 
 enum AlarmItem {
     //% block="second"
-    SECOND = 1,
+    Second = 1,
     //% block="minute"
-    MINUTE = 2,
+    Minute = 2,
     //% block="hour"
-    HOUR = 3,
+    Hour = 3,
     //% block="weekday"
-    WEEKDAY = 4,
+    Weekday= 4,
     //% block="day"
-    DAY = 5
+    Day = 5
 }
 
 enum WeekItem {
     //% block="monday"
-    MONDAY = 1,
+    Monday = 1,
     //% block="tuesday"
-    TUESDAY = 2,
+    Tuesday = 2,
     //% block="wednesday"
-    WEDNESDAY = 3,
+    Wednesday = 3,
     //% block="thursday"
-    THURSDAY = 4,
+    Thursday = 4,
     //% block="friday"
-    FRIDAY = 5,
+    Friday = 5,
     //% block="saturday"
-    SATURDAY = 6,
+    Saturday = 6,
     //% block="sunday"
-    SUNDAY = 7
+    Sunday = 7
 }
 
 enum RepeatMode {
-    //% block="everyday"
-    EVERYDAY = 1,
-    //% block="everymonth"
-    EVERYMONTH = 2,
-    //% block="everyweek"
-    EVERYWEEK = 3,
-    //% block="everyhour"
-    EVERYHOUR = 4,
-    //% block="everyminute"
-    EVERYMINUTE = 5,
-    //% block="everysecond"
-    EVERYSECOND = 6
+    //% block="every day"
+    Everyday = 1,
+    //% block="every month"
+    Everymonth = 2,
+    //% block="every week"
+    Everyweek = 3,
+    //% block="every hour"
+    Everyhour = 4,
+    //% block="every minute"
+    Everyminute = 5,
+    //% block="every second"
+    Everysecond = 6
 }
 
 declare namespace pins {
@@ -311,9 +311,11 @@ namespace rtc {
             if (!this.isConnected)
                 return;
 
-            // const mask = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
-            const reg = /* (mask & 0x80) + */ ((val / 10 & 0x03) << 4) + (val & 0x0F);
+            console.log(val);
 
+            // const mask = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
+            const reg = /* (mask & 0x80) + */ ((val / 10 & 0x03) << 4) + (val % 10 & 0x0F);
+            console.log(reg);
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE, reg);
         }
 
@@ -344,32 +346,32 @@ namespace rtc {
             let minute = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_MINUTES);
             let second = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS);
 
-            if (mode == RepeatMode.EVERYMONTH) {
+            if (mode == RepeatMode.Everymonth) {
                 day = day & 0x3F;
                 hour = hour & 0x7F;
                 minute = minute & 0x7F;
                 second = second & 0x7F;
-            } else if (mode == RepeatMode.EVERYWEEK) {
+            } else if (mode == RepeatMode.Everyweek) {
                 day = (day & 0x3F) | 0x40;
                 hour = hour & 0x7F;
                 minute = minute & 0x7F;
                 second = second & 0x7F;
-            } else if (mode == RepeatMode.EVERYDAY) {
+            } else if (mode == RepeatMode.Everyday) {
                 day = day | 0x80;
                 hour = hour & 0x7F;
                 minute = minute & 0x7F;
                 second = second & 0x7F;
-            } else if (mode == RepeatMode.EVERYHOUR) {
+            } else if (mode == RepeatMode.Everyhour) {
                 day = day | 0x80;
                 hour = hour | 0x80;
                 minute = minute & 0x7F;
                 second = second & 0x7F;
-            } else if (mode == RepeatMode.EVERYMINUTE) {
+            } else if (mode == RepeatMode.Everyminute) {
                 day = day | 0x80;
                 hour = hour | 0x80;
                 minute = minute | 0x80;
                 second = second & 0x7F;
-            } else if (mode == RepeatMode.EVERYSECOND) {
+            } else if (mode == RepeatMode.Everysecond) {
                 day = day | 0x80;
                 hour = hour | 0x80;
                 minute = minute | 0x80;
@@ -394,17 +396,17 @@ namespace rtc {
             let second = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_SECONDS);
 
             if (second & 0x80) {
-                return RepeatMode.EVERYSECOND;
+                return RepeatMode.Everysecond;
             } else if (minute & 0x80) {
-                return RepeatMode.EVERYMINUTE;
+                return RepeatMode.Everyminute;
             } else if (hour & 0x80) {
-                return RepeatMode.EVERYHOUR;
+                return RepeatMode.Everyhour;
             } else if (day & 0x80) {
-                return RepeatMode.EVERYDAY;
+                return RepeatMode.Everyday;
             } else if (day & 0x40) {
-                return RepeatMode.EVERYWEEK;
+                return RepeatMode.Everyweek;
             } else {
-                return RepeatMode.EVERYMONTH;
+                return RepeatMode.Everymonth;
             }
         }
 
@@ -438,7 +440,7 @@ namespace rtc {
     export const ds1339 = new DS1339();
 
     /**
-     * Returns the string format time.
+     * Get the string format time.
      */
     //% block="string format time %format "
     //% blockId=rtc_string_format_time 
@@ -538,28 +540,28 @@ namespace rtc {
     }
 
     /**
-     * Returns the time item.
+     * Get the time item.
      */
     //% blockId=rtc_time
     //% block="%item"
     //% help=github:xtronpro-rtc/docs/time
     //% weight=100
     //% group="Time" 
-    export function time(item: TimeItem = TimeItem.SECOND): number {
+    export function time(item: TimeItem = TimeItem.Second): number {
         switch (item) {
-            case TimeItem.SECOND:
+            case TimeItem.Second:
                 return ds1339.second;
-            case TimeItem.MINUTE:
+            case TimeItem.Minute:
                 return ds1339.minute;
-            case TimeItem.HOUR:
+            case TimeItem.Hour:
                 return ds1339.hour;
-            case TimeItem.WEEKDAY:
+            case TimeItem.Weekday:
                 return ds1339.weekday;
-            case TimeItem.DAY:
+            case TimeItem.Day:
                 return ds1339.day;
-            case TimeItem.MONTH:
+            case TimeItem.Month:
                 return ds1339.month;
-            case TimeItem.YEAR:
+            case TimeItem.Year:
                 return ds1339.year;
         }
         return 0;
@@ -568,24 +570,26 @@ namespace rtc {
     /**
      * Set Alarm, RepeadMode, Hour, Minute, Second, Day, Weekday
      */
-    //% group="Alarm"
-    //% weight=100
-    //% blockId=rtcSetAlarmWeek block="set alarm %mode hour %hour minute %minu second %sec %enable || day %day weekday %weekday"
+    //% blockId=rtcSetAlarm
+    //% block="set alarm %mode=repeat_mode_enum hour %hour minute %minu second %sec %enable || day %day weekday %weekday"
     //% hour.defl=0 hour.min=0 hour.max=23
     //% minu.defl=0 minu.min=0 minu.max=59
     //% sec.defl=0 sec.min=0 sec.max=59
     //% enable.shadow="toggleOnOff" enable.defl=true
     //% day.defl=1 day.min=1 day.max=31
     //% expandableArgumentMode="toggle"
-    export function setAlarm(mode: RepeatMode, hour: number, minu: number, sec: number, enable: boolean, day?: number, weekday?: WeekItem) {
+    //% help=github:xtronpro-rtc/docs/set-alarm
+    //% weight=100
+    //% group="Alarm"
+    export function setAlarm(mode: number, hour: number, minu: number, sec: number, enable: boolean, day?: number, weekday?: WeekItem) {
         ds1339.alarmHour = hour;
         ds1339.alarmMinute = minu;
         ds1339.alarmSecond = sec;
         ds1339.alarmRepeatMode = mode;
         
-        if (mode == RepeatMode.EVERYMONTH) {
+        if (mode == RepeatMode.Everymonth) {
             ds1339.alarmDay = day;
-        } else if (mode == RepeatMode.EVERYWEEK) {
+        } else if (mode == RepeatMode.Everyweek) {
             ds1339.alarmWeekday = weekday;
         }
 
@@ -605,7 +609,7 @@ namespace rtc {
     }
 
     /**
-     * Set Alarm Date, Hour, Minute, Second
+     * Set Alarm Day, Hour, Minute, Second
      */
     export function setAlarmDay(date: number = 1, hour: number, minu: number, sec: number, enable: boolean) {
         ds1339.alarmDay = date;
@@ -617,27 +621,36 @@ namespace rtc {
     }
 
     /**
-     * Get Alarm Repeat Mode
+     * Get the alarm repeat mode of the RTC
      */
+    //% blockId=rtcAlarmRepeatMode
+    //% block="alarm repeat mode"
+    //% help=github:xtronpro-rtc/docs/alarm-repeat-mode
     //% weight=95
     //% group="Alarm"
-    //% blockId=rtcAlarmRepeatMode block="alarm repeat mode"
-    export function alarmRepeatMode(): RepeatMode {
+    export function alarmRepeatMode(): number {
         return ds1339.alarmRepeatMode;
     }
 
+    /**
+     * Get the member of RepeatMode enum
+     */
+    //% blockId=repeat_mode_enum
+    //% block="%arg"
+    //% shim=TD_ID
     //% weight=94
     //% group="Alarm"
-    //% blockId=repeat_mode_enum block="%arg"
-    export function repeatModeEnumShim(arg: RepeatMode): RepeatMode {
+    export function repeatModeEnumShim(arg: RepeatMode): number {
         return arg;
     }
 
     /**
-     * Run some code when Alarm Interupt
+     * Run some code when the alarm time is up
      */
-    //% weight=99 blockGap=8 help=controller/button/on-event
-    //% blockId=alarminteruptonevent block="on alarmed"
+    //% blockId=alarmInteruptonEvent
+    //% block="on alarmed"
+    //% help=github:xtronpro-rtc/docs/on-event
+    //% weight=99 blockGap=8 
     //% group="Alarm"
     export function onEvent(handler: () => void) {
         pins.AlarmIntPin.setPull(PinPullMode.PullUp);
@@ -645,23 +658,26 @@ namespace rtc {
     }
 
     /**
-     * Clear Alarm Status
+     * Clear alarm interrupt status
      */
+    //% blockId=clearAlarmStatus
+    //% block="clear alarm status"
+    //% help=github:xtronpro-rtc/docs/clear-alarm-status
     //% weight=98
-    //% blockId=clearalarmstatus block="clear alarm status"
     //% group="Alarm"
     export function clearAlarmStatus() {
         ds1339.clearAlarmIntStatus();
     }
 
     /**
-     * Read string format alarm.
+     * Read string format alarm time.
      */
-    //% group="Alarm"
-    //% weight=96
-    //% blockId=rtc_read_format_alarm block="string format alarm %format "
+    //% blockId=rtc_read_format_alarm
+    //% block="string format alarm %format "
     //% format.defl="hh:mm"
-    //% help=rtc/read-format-alarm
+    //% help=github:xtronpro-rtc/docs/string-format-alarm
+    //% weight=96
+    //% group="Alarm"
     export function stringFormatAlarm(format: string): string {
         const weekList = [
             'Monday',
@@ -715,29 +731,30 @@ namespace rtc {
     }
 
     /**
-     * Read rtc alarm item.
+     * Read rtc alarm time item.
      */
-    //% group="Alarm" 
+    //% blockId=rtc_read_alarm
+    //% block="alarm %item"
+    //% help=github:xtronpro-rtc/docs/alarm
     //% weight=97
-    //% blockId=rtc_read_alarm block="alarm %item"
-    //% help=rtc/read-alarm
-    export function alarm(item: AlarmItem = AlarmItem.SECOND): number {
+    //% group="Alarm" 
+    export function alarm(item: AlarmItem = AlarmItem.Second): number {
         const mask = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
 
         switch (item) {
-            case AlarmItem.SECOND:
+            case AlarmItem.Second:
                 return ds1339.alarmSecond;
-            case AlarmItem.MINUTE:
+            case AlarmItem.Minute:
                 return ds1339.alarmMinute;
-            case AlarmItem.HOUR:
+            case AlarmItem.Hour:
                 return ds1339.alarmHour;
-            case AlarmItem.WEEKDAY:
+            case AlarmItem.Weekday:
                 if (mask & 0x40) {
                     return ds1339.alarmWeekday;
                 } else {
                     return undefined;
                 }
-            case AlarmItem.DAY:
+            case AlarmItem.Day:
                 if (mask & 0x40) {
                     return undefined;
                 } else {
@@ -748,12 +765,13 @@ namespace rtc {
     }
 
     /**
-     * Read rtc alarm int.
+     * Get rtc alarm On/Off status.
      */
-    //% group="Alarm" 
+    //% blockId=rtc_read_alarm_int
+    //% block="is alarm on"
+    //% help=github:xtronpro-rtc/docs/is-alarm-on
     //% weight=93
-    //% blockId=rtc_read_alarm_int block="is alarm on"
-    //% help=rtc/read-alarm-int
+    //% group="Alarm" 
     export function isAlarm(): boolean {
         return ds1339.alarmInt;
     }
@@ -762,20 +780,40 @@ namespace rtc {
         return ((v / 10) << 4) + (v % 10);
     }
 
+    function constraint(val: number, min: number, max: number): number {
+        if (val < min)
+            val = min;
+        
+        if (val > max)
+            val = max;
+        
+        return val;
+    }
+
     /**
      * Set Time
      */
-    //% weight=97
-    //% blockId=settime block="set time year %year month %month day %day weekday %weekday hour %hour minute %minute second %second"
-    //% year.defl=2021
+    //% blockId=settime
+    //% block="set time year %year month %month day %day weekday %weekday hour %hour minute %minute second %second"
+    //% year.defl=0 year.min=0 year.max=99
     //% month.defl=1 month.min=1 month.max=12
     //% day.defl=1 day.min=1 day.max=31
     //% hour.defl=0 hour.min=0 hour.max=23
     //% minute.defl=0 minute.min=0 minute.max=59
     //% second.defl=0 second.min=0 second.max=59
+    //% help=github:xtronpro-rtc/docs/set-time
+    //% weight=97
     //% group="Time"
     export function setTime(year: number, month: number, day: number, weekday: WeekItem, hour: number, minute: number, second: number) {
         let buf = pins.createBuffer(8);
+
+        year = constraint(year, 0, 99);
+        month = constraint(month, 1, 12);
+        day = constraint(day, 1, 31);
+        weekday = constraint(weekday, 1, 7);
+        hour = constraint(hour, 0, 23);
+        minute = constraint(minute, 0, 59);
+        second = constraint(second, 0, 59);
 
         buf[0] = 0x00;
         buf[1] = bin2bcd(second);
@@ -784,7 +822,7 @@ namespace rtc {
         buf[4] = bin2bcd(weekday);
         buf[5] = bin2bcd(day);
         buf[6] = bin2bcd(month);
-        buf[7] = bin2bcd(year);
+        buf[7] = bin2bcd(year % 100);
         
         pins.i2cWriteBuffer(DS1339_I2C_ADDRESS, buf);
     }
