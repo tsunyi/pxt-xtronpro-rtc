@@ -302,7 +302,6 @@ namespace rtc {
                 time = game.askForNumber('Time (hhmmss)', 6);
             }
 
-            game.consoleOverlay.setVisible(true);
             if (this.repeatOption == RepeatOption.Everymonth) {
                 rtc.setAlarmDay(date, time / 10000, time / 100 % 100, time % 100, true);
             } else if (this.repeatOption == RepeatOption.Everyweek) {
@@ -318,7 +317,7 @@ namespace rtc {
             }
             
             game.popScene();
-            // game.consoleOverlay.setVisible(false);
+            game.consoleOverlay.setVisible(false);
         }
     }
 

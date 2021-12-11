@@ -311,11 +311,9 @@ namespace rtc {
             if (!this.isConnected)
                 return;
 
-            console.log(val);
-
             // const mask = pins.i2cReadRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE);
             const reg = /* (mask & 0x80) + */ ((val / 10 & 0x03) << 4) + (val % 10 & 0x0F);
-            console.log(reg);
+
             pins.i2cWriteRegister(DS1339_I2C_ADDRESS, REG_DS1339_ALARM1_DAYDATE, reg);
         }
 
