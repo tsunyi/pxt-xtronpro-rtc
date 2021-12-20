@@ -19,7 +19,8 @@
         "docs/string-format-alarm.md",
         "docs/alarm.md",
         "docs/is-alarm-on.md",
-        "docs/set-time.md"
+        "docs/set-time.md",
+        "turorial.md"
     ],
     "testFiles": [
         "test.ts"
