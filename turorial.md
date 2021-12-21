@@ -96,6 +96,8 @@ time.setPosition(80, 38)
 
 ## 5. Create a colon for time
 
+---
+
 - :paper plane: Drag  
 ``||sprites:set [mySprite] to sprite [] of kind [Player]||``  
 to **the end** of the ``||loops:on start||`` container.
@@ -129,6 +131,8 @@ colon.setPosition(80, 38)
 ```
 
 ## 6. Create a date Text Sprite
+
+---
 
 - :font: From the ``||textsprite:Text Sprite||`` category, 
 drag  
