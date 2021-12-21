@@ -20,7 +20,8 @@
         "docs/alarm.md",
         "docs/is-alarm-on.md",
         "docs/set-time.md",
-        "turorial.md"
+        "turorial.md",
+        "tutorial-info-cache.json"
     ],
     "testFiles": [
         "test.ts"
