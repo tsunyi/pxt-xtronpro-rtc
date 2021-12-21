@@ -8,6 +8,12 @@ Make a watch application to display the time, date and alarm.
 
 Let's get started!
 
+## Extensions @showdialog
+
+Extensions in Arcade allow users to easily develop and share portions of their code with others. In this tutorial, you will be using the [arcade-text](https://github.com/microsoft/arcade-text) and [xtronpro-rtc](https://github.com/tsunyi/pxt-xtronpro-rtc) extensions to create a watch application. In this example the extension is automatically loaded: in other projects, you can load the extension by yourself.
+
+Click [hear](https://xtron-docs.readthedocs.io/en/latest/pxt-extensions.html) to learn how to load extension.
+
 ## 2. See the Scene
 
 **Your scene has already been set!**
