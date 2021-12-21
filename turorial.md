@@ -1,4 +1,4 @@
-# Make my first watch application
+# Watch
 
 ## Introduction @showdialog
 
